@@ -268,17 +268,20 @@
                     completed_tasks: JSON.stringify(completedTasks)
                 };
 
+                // Сначала отправляем данные
                 tg.sendData(JSON.stringify(data));
-                tg.close();
 
-                renderTasks();
-
-                // Показываем уведомление
+                // Затем показываем уведомление
                 tg.showPopup({
                     title: 'Задание выполнено!',
-                    message: `Вы получили ${task.points} очков! Данные сохранены.`,
-                    buttons: [{type: 'ok'}]
+                    message: `Вы получили ${task.points} очков!`,
+                    buttons: [{
+                        id: "ok",
+                        type: "ok"
+                    }]
                 });
+
+                renderTasks();
             }
         }
 
@@ -286,10 +289,7 @@
         renderTasks();
 
         // Настраиваем главную кнопку
-        tg.MainButton.text = "Закрыть";
-        tg.MainButton.onClick(() => tg.close());
-        tg.MainButton.show();
+        tg.MainButton.hide();
     </script>
 </body>
 </html>
-
