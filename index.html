@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            color: var(--tg-theme-text-color, #000);
+            background: var(--tg-theme-bg-color, #fff);
+        }
+
+        .task-card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .task-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .task-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+
+        .task-points {
+            font-size: 16px;
+            color: var(--tg-theme-accent-text-color, #2481cc);
+            margin-top: 8px;
+        }
+
+        .button {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .completed {
+            opacity: 0.7;
+        }
+
+        .completed::after {
+            content: "✓";
+            color: #4CAF50;
+            margin-left: 8px;
+        }
+
+        #user-stats {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="user-stats">
+        <h2>Ваш прогресс</h2>
+        <p>Очки: <span id="points">0</span> 🏅</p>
+        <p>Выполнено заданий: <span id="completed-tasks">0</span></p>
+    </div>
+
+    <div id="tasks-container">
+        <!-- Задания будут добавлены через JavaScript -->
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Инициализация
+        tg.ready();
+
+        // Демо-данные для заданий
+        const tasks = [
+            {
+                id: 1,
+                title: "Первое задание",
+                description: "Познакомьтесь с интерфейсом приложения",
+                points: 5,
+                completed: false
+            },
+            {
+                id: 2,
+                title: "Математическая задача",
+                description: "Решите пример: 2 + 2 * 2",
+                points: 10,
+                completed: false
+            },
+            {
+                id: 3,
+                title: "Загадка",
+                description: "Что можно увидеть с закрытыми глазами?",
+                points: 15,
+                completed: false
+            }
+        ];
+
+        let userPoints = 0;
+        let completedTasksCount = 0;
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-card ${task.completed ? 'completed' : ''}`;
+                
+                taskElement.innerHTML = `
+                    <div class="task-title">${task.title}</div>
+                    <div class="task-description">${task.description}</div>
+                    <div class="task-points">🏅 ${task.points} очков</div>
+                    ${!task.completed ? `<button class="button" onclick="completeTask(${task.id})">Выполнить</button>` : ''}
+                `;
+
+                container.appendChild(taskElement);
+            });
+
+            // Обновляем статистику
+            document.getElementById('points').textContent = userPoints;
+            document.getElementById('completed-tasks').textContent = completedTasksCount;
+        }
+
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && !task.completed) {
+                task.completed = true;
+                userPoints += task.points;
+                completedTasksCount++;
+                
+                // Отправляем данные в Telegram
+                tg.sendData(JSON.stringify({
+                    action: 'complete_task',
+                    taskId: taskId,
+                    points: task.points
+                }));
+
+                renderTasks();
+            }
+        }
+
+        // Первоначальный рендер заданий
+        renderTasks();
+
+        // Настраиваем главную кнопку Telegram
+        tg.MainButton.text = "Закрыть";
+        tg.MainButton.onClick(() => {
+            tg.close();
+        });
+        tg.MainButton.show();
+    </script>
+</body>
+</html>
