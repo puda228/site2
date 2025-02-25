@@ -261,17 +261,7 @@
                 completedTasks.push(taskId);
                 userPoints += task.points;
                 
-                // Отправляем данные в бот
-                const data = {
-                    action: 'update_progress',
-                    points: userPoints,
-                    completed_tasks: JSON.stringify(completedTasks)
-                };
-
-                // Сначала отправляем данные
-                tg.sendData(JSON.stringify(data));
-
-                // Затем показываем уведомление
+                // Показываем уведомление
                 tg.showPopup({
                     title: 'Задание выполнено!',
                     message: `Вы получили ${task.points} очков!`,
@@ -281,6 +271,14 @@
                     }]
                 });
 
+                // Отправляем данные в бот
+                const data = {
+                    action: 'update_progress',
+                    points: userPoints,
+                    completed_tasks: JSON.stringify(completedTasks)
+                };
+                
+                tg.sendData(JSON.stringify(data));
                 renderTasks();
             }
         }
@@ -289,7 +287,19 @@
         renderTasks();
 
         // Настраиваем главную кнопку
-        tg.MainButton.hide();
+        tg.MainButton.text = "Закрыть";
+        tg.MainButton.onClick(() => {
+            // Отправляем последние данные перед закрытием
+            const data = {
+                action: 'update_progress',
+                points: userPoints,
+                completed_tasks: JSON.stringify(completedTasks)
+            };
+            tg.sendData(JSON.stringify(data));
+            tg.close();
+        });
+        tg.MainButton.show();
     </script>
 </body>
 </html>
+
