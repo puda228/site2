@@ -3,136 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager Mini App</title>
+    <title>Task Manager</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 16px;
-            color: var(--tg-theme-text-color, #000);
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
             background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        .task-card {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: transform 0.2s;
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .task-card:hover {
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #2481cc);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+
+        .tasks {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .task {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 12px;
+            padding: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task:not(.completed):hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .task.completed {
+            opacity: 0.7;
+            background: var(--tg-theme-secondary-bg-color, #e8e8e8);
+        }
+
+        .task.completed::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #4CAF50;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
         .task-title {
             font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        .task-description {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #666);
+            font-weight: 600;
         }
 
         .task-points {
-            font-size: 16px;
-            color: var(--tg-theme-accent-text-color, #2481cc);
-            margin-top: 8px;
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 14px;
         }
 
-        .button {
+        .task-description {
+            color: var(--tg-theme-hint-color, #999);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .complete-btn {
             background: var(--tg-theme-button-color, #2481cc);
             color: var(--tg-theme-button-text-color, #fff);
             border: none;
             border-radius: 8px;
-            padding: 12px 20px;
+            padding: 10px;
+            width: 100%;
             font-size: 16px;
             cursor: pointer;
-            width: 100%;
-            margin-top: 8px;
+            transition: opacity 0.2s;
         }
 
-        .completed {
-            opacity: 0.7;
+        .complete-btn:hover {
+            opacity: 0.9;
         }
 
-        .completed::after {
-            content: "✓";
-            color: #4CAF50;
+        .level-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
             margin-left: 8px;
         }
 
-        #user-stats {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 20px;
+        .level-easy {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .level-medium {
+            background: #FFC107;
+            color: black;
+        }
+
+        .level-hard {
+            background: #F44336;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div id="user-stats">
-        <h2>Ваш прогресс</h2>
-        <p>Очки: <span id="points">0</span> 🏅</p>
-        <p>Выполнено заданий: <span id="completed-tasks">0</span></p>
+    <div class="header">
+        <h1>Задания</h1>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="points">0</div>
+                <div class="stat-label">Очки</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completed-tasks">0</div>
+                <div class="stat-label">Выполнено</div>
+            </div>
+        </div>
     </div>
 
-    <div id="tasks-container">
-        <!-- Задания будут добавлены через JavaScript -->
-    </div>
+    <div class="tasks" id="tasks-container"></div>
 
     <script>
-        let tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
-
-        // Инициализация
         tg.ready();
 
-        // Демо-данные для заданий
+        // Получаем параметры из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        let userPoints = parseInt(urlParams.get('progress')) || 0;
+        let completedTasksData = urlParams.get('completed') || '[]';
+        let completedTasks = [];
+
+        try {
+            completedTasks = JSON.parse(completedTasksData);
+        } catch (e) {
+            completedTasks = [];
+        }
+
         const tasks = [
             {
                 id: 1,
-                title: "Первое задание",
-                description: "Познакомьтесь с интерфейсом приложения",
+                title: "Знакомство",
+                description: "Изучите интерфейс приложения и его возможности",
                 points: 5,
-                completed: false
+                level: "easy"
             },
             {
                 id: 2,
-                title: "Математическая задача",
-                description: "Решите пример: 2 + 2 * 2",
+                title: "Математика",
+                description: "Решите задачу: Сколько будет 2 + 2 × 2?",
                 points: 10,
-                completed: false
+                level: "medium"
             },
             {
                 id: 3,
                 title: "Загадка",
                 description: "Что можно увидеть с закрытыми глазами?",
                 points: 15,
-                completed: false
+                level: "medium"
+            },
+            {
+                id: 4,
+                title: "Программирование",
+                description: "Напишите программу, которая выводит 'Hello, World!'",
+                points: 20,
+                level: "hard"
             }
         ];
 
-        let userPoints = 0;
-        let completedTasksCount = 0;
+        function getLevelBadge(level) {
+            return `<span class="level-badge level-${level}">${
+                level === 'easy' ? 'Легко' :
+                level === 'medium' ? 'Средне' : 'Сложно'
+            }</span>`;
+        }
 
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
 
             tasks.forEach(task => {
+                const isCompleted = completedTasks.includes(task.id);
                 const taskElement = document.createElement('div');
-                taskElement.className = `task-card ${task.completed ? 'completed' : ''}`;
+                taskElement.className = `task ${isCompleted ? 'completed' : ''}`;
                 
                 taskElement.innerHTML = `
-                    <div class="task-title">${task.title}</div>
+                    <div class="task-header">
+                        <div class="task-title">
+                            ${task.title}
+                            ${getLevelBadge(task.level)}
+                        </div>
+                        <div class="task-points">🏅 ${task.points}</div>
+                    </div>
                     <div class="task-description">${task.description}</div>
-                    <div class="task-points">🏅 ${task.points} очков</div>
-                    ${!task.completed ? `<button class="button" onclick="completeTask(${task.id})">Выполнить</button>` : ''}
+                    ${!isCompleted ? `
+                        <button class="complete-btn" onclick="completeTask(${task.id})">
+                            Выполнить задание
+                        </button>
+                    ` : ''}
                 `;
 
                 container.appendChild(taskElement);
@@ -140,36 +252,41 @@
 
             // Обновляем статистику
             document.getElementById('points').textContent = userPoints;
-            document.getElementById('completed-tasks').textContent = completedTasksCount;
+            document.getElementById('completed-tasks').textContent = completedTasks.length;
         }
 
         function completeTask(taskId) {
             const task = tasks.find(t => t.id === taskId);
-            if (task && !task.completed) {
-                task.completed = true;
+            if (task && !completedTasks.includes(taskId)) {
+                completedTasks.push(taskId);
                 userPoints += task.points;
-                completedTasksCount++;
                 
-                // Отправляем данные в Telegram
+                // Отправляем данные в бот
                 tg.sendData(JSON.stringify({
-                    action: 'complete_task',
-                    taskId: taskId,
-                    points: task.points
+                    action: 'update_progress',
+                    points: userPoints,
+                    completed_tasks: JSON.stringify(completedTasks)
                 }));
 
                 renderTasks();
+
+                // Показываем уведомление
+                tg.showPopup({
+                    title: 'Задание выполнено!',
+                    message: `Вы получили ${task.points} очков!`,
+                    buttons: [{type: 'ok'}]
+                });
             }
         }
 
         // Первоначальный рендер заданий
         renderTasks();
 
-        // Настраиваем главную кнопку Telegram
+        // Настраиваем главную кнопку
         tg.MainButton.text = "Закрыть";
-        tg.MainButton.onClick(() => {
-            tg.close();
-        });
+        tg.MainButton.onClick(() => tg.close());
         tg.MainButton.show();
     </script>
 </body>
 </html>
+
