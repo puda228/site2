@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Задания</title>
+    <title>Task Manager</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -19,127 +19,147 @@
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
-            cursor: pointer;
-            transition: transform 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .task:hover {
-            transform: scale(1.02);
+        .task-info {
+            flex-grow: 1;
         }
 
-        .task.completed {
-            opacity: 0.7;
+        .task-title {
+            font-weight: bold;
+            margin-bottom: 8px;
         }
 
-        .points {
+        .task-points {
             color: var(--tg-theme-hint-color, #999);
+        }
+
+        .complete-button {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
             font-size: 14px;
         }
 
-        #totalPoints {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: var(--tg-theme-bg-color, #fff);
-            padding: 8px 16px;
-            border-bottom: 1px solid var(--tg-theme-hint-color, #ddd);
+        .complete-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #total-points {
+            font-size: 18px;
             font-weight: bold;
-            text-align: center;
+            margin-bottom: 16px;
+            color: var(--tg-theme-text-color, #000);
         }
     </style>
 </head>
 <body>
-    <div id="totalPoints">Всего очков: 0</div>
-    <div id="tasks" style="margin-top: 40px"></div>
+    <div id="total-points">Всего очков: 0</div>
+    <div id="tasks"></div>
 
     <script>
-        let webapp = window.Telegram.WebApp;
-        webapp.ready();
-        webapp.expand();
-
-        // Глобальные переменные
-        window.userPoints = 0;
-        window.completedTasks = [];
+        const tg = window.Telegram.WebApp;
+        
+        // Инициализация
+        tg.ready();
+        tg.expand();
 
         // Задания
         const tasks = [
-            { id: 1, title: "Простое задание", points: 10, description: "Выполните это простое задание для получения 10 очков" },
-            { id: 2, title: "Задание средней сложности", points: 20, description: "Это задание немного сложнее, но даёт больше очков" },
-            { id: 3, title: "Сложное задание", points: 30, description: "Сложное задание с максимальным количеством очков" }
+            { id: 1, title: "Первое задание", description: "Выполните первое задание", points: 10 },
+            { id: 2, title: "Второе задание", description: "Выполните второе задание", points: 20 },
+            { id: 3, title: "Третье задание", description: "Выполните третье задание", points: 30 },
         ];
 
-        // Отображаем задания
-        function renderTasks() {
+        let userPoints = 0;
+        let completedTasks = [];
+
+        // Загрузка прогресса пользователя
+        function loadProgress() {
+            const savedPoints = localStorage.getItem('points');
+            const savedTasks = localStorage.getItem('completed_tasks');
+            
+            if (savedPoints) {
+                userPoints = parseInt(savedPoints);
+            }
+            
+            if (savedTasks) {
+                completedTasks = JSON.parse(savedTasks);
+            }
+            
+            updateUI();
+        }
+
+        // Сохранение прогресса пользователя
+        function saveProgress() {
+            localStorage.setItem('points', userPoints.toString());
+            localStorage.setItem('completed_tasks', JSON.stringify(completedTasks));
+            
+            // Отправляем данные в бот
+            tg.sendData(JSON.stringify({
+                points: userPoints,
+                tasks: completedTasks
+            }));
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            document.getElementById('total-points').textContent = `Всего очков: ${userPoints}`;
+            
             const tasksContainer = document.getElementById('tasks');
             tasksContainer.innerHTML = '';
-
+            
             tasks.forEach(task => {
-                const isCompleted = window.completedTasks.includes(task.id);
+                const isCompleted = completedTasks.includes(task.id);
+                
                 const taskElement = document.createElement('div');
-                taskElement.className = `task ${isCompleted ? 'completed' : ''}`;
+                taskElement.className = 'task';
                 taskElement.innerHTML = `
-                    <h3>${task.title}</h3>
-                    <p>${task.description}</p>
-                    <div class="points">+${task.points} очков</div>
+                    <div class="task-info">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-description">${task.description}</div>
+                        <div class="task-points">+${task.points} очков</div>
+                    </div>
+                    <button 
+                        class="complete-button" 
+                        onclick="completeTask(${task.id}, ${task.points})"
+                        ${isCompleted ? 'disabled' : ''}
+                    >
+                        ${isCompleted ? 'Выполнено' : 'Выполнить'}
+                    </button>
                 `;
-
-                if (!isCompleted) {
-                    taskElement.onclick = () => completeTask(task);
-                }
-
+                
                 tasksContainer.appendChild(taskElement);
             });
-
-            document.getElementById('totalPoints').textContent = `Всего очков: ${window.userPoints}`;
         }
 
         // Выполнение задания
-        function completeTask(task) {
-            try {
-                if (!window.completedTasks.includes(task.id)) {
-                    window.completedTasks.push(task.id);
-                    window.userPoints += task.points;
-                    saveProgress();
-                    renderTasks();
-                }
-            } catch (e) {
-                console.error('Ошибка при выполнении задания:', e);
-                webapp.showPopup({
-                    title: 'Ошибка',
-                    message: 'Не удалось выполнить задание: ' + e.message
-                });
-            }
-        }
-
-        // Сохранение прогресса
-        function saveProgress() {
-            try {
-                // Создаем строку запроса с данными
-                const data = {
-                    points: window.userPoints,
-                    tasks: window.completedTasks
-                };
-
-                // Отправляем данные
-                webapp.sendData(JSON.stringify(data));
+        function completeTask(taskId, points) {
+            if (!completedTasks.includes(taskId)) {
+                completedTasks.push(taskId);
+                userPoints += points;
+                
+                saveProgress();
+                updateUI();
                 
                 // Показываем уведомление
-                webapp.showPopup({
-                    title: 'Успех',
-                    message: 'Прогресс сохранен!'
-                });
-            } catch (e) {
-                console.error('Ошибка при сохранении:', e);
-                webapp.showPopup({
-                    title: 'Ошибка',
-                    message: 'Не удалось сохранить прогресс: ' + e.message
+                tg.showPopup({
+                    title: 'Задание выполнено!',
+                    message: `Вы получили +${points} очков`,
+                    buttons: [{type: 'ok'}]
                 });
             }
         }
 
-        // Инициализация
-        renderTasks();
+        // Загружаем прогресс при запуске
+        loadProgress();
     </script>
 </body>
 </html>
