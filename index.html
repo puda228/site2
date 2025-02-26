@@ -198,6 +198,135 @@
     <div class="tasks" id="tasks-container"></div>
 
     <script>
+        // Global variables and functions
+        let userPoints = 0;
+        let completedTasks = [];
+        let tasks = [];
+        let webapp = null;
+
+        // Make functions globally available
+        function completeTask(taskId) {
+            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (!taskElement) return;
+
+            // Add completion animation
+            taskElement.classList.add('task-completed');
+
+            // Show points popup
+            const points = taskElement.getAttribute('data-points');
+            const popup = document.createElement('div');
+            popup.className = 'points-popup';
+            popup.textContent = `+${points} очков!`;
+            document.body.appendChild(popup);
+
+            // Remove popup after animation
+            setTimeout(() => {
+                popup.remove();
+            }, 1000);
+
+            // Update progress
+            const taskData = tasks.find(t => t.id === taskId);
+            if (taskData) {
+                completedTasks.push(taskId);
+                userPoints += taskData.points;
+                updateStats();
+                saveProgress();
+            }
+
+            // Remove completion animation class after delay
+            setTimeout(() => {
+                taskElement.classList.remove('task-completed');
+            }, 500);
+        }
+
+        function updateStats() {
+            document.getElementById('points').textContent = userPoints;
+            document.getElementById('completed-tasks').textContent = completedTasks.length;
+        }
+
+        function saveProgress() {
+            try {
+                if (!webapp) {
+                    webapp = window.Telegram.WebApp;
+                }
+                
+                if (!webapp) {
+                    throw new Error('Telegram WebApp не доступен');
+                }
+
+                // Создаем объект с данными
+                const data = {
+                    progress: userPoints,
+                    completed: JSON.stringify(completedTasks)
+                };
+                
+                console.log('Attempting to save progress:', {
+                    webappAvailable: !!webapp,
+                    webappMethods: Object.keys(webapp),
+                    data: data
+                });
+                
+                // Отправляем данные через WebApp API
+                webapp.sendData(JSON.stringify(data));
+                console.log('Данные успешно отправлены');
+                
+            } catch (e) {
+                console.error('Ошибка при отправке данных:', e);
+                try {
+                    if (webapp && typeof webapp.showPopup === 'function') {
+                        webapp.showPopup({
+                            title: 'Ошибка',
+                            message: 'Не удалось сохранить прогресс: ' + e.message
+                        });
+                    } else {
+                        alert('Ошибка: ' + e.message);
+                    }
+                } catch (popupError) {
+                    alert('Ошибка: ' + e.message);
+                }
+            }
+        }
+
+        function getLevelBadge(level) {
+            return `<span class="level-badge level-${level}">${
+                level === 'easy' ? 'Легко' :
+                level === 'medium' ? 'Средне' : 'Сложно'
+            }</span>`;
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+
+            tasks.forEach(task => {
+                const isCompleted = completedTasks.includes(task.id);
+                const taskElement = document.createElement('div');
+                taskElement.className = `task ${isCompleted ? 'completed' : ''}`;
+                taskElement.setAttribute('data-task-id', task.id);
+                taskElement.setAttribute('data-points', task.points);
+                
+                taskElement.innerHTML = `
+                    <div class="task-header">
+                        <div class="task-title">
+                            ${task.title}
+                            ${getLevelBadge(task.level)}
+                        </div>
+                        <div class="task-points">🏅 ${task.points}</div>
+                    </div>
+                    <div class="task-description">${task.description}</div>
+                    ${!isCompleted ? `
+                        <button class="complete-btn" onclick="completeTask(${task.id})">
+                            Выполнить задание
+                        </button>
+                    ` : ''}
+                `;
+
+                container.appendChild(taskElement);
+            });
+
+            updateStats();
+        }
+
         // Дожидаемся загрузки документа и WebApp
         document.addEventListener('DOMContentLoaded', function() {
             if (window.Telegram && window.Telegram.WebApp) {
@@ -218,7 +347,7 @@
         });
 
         function initApp() {
-            const webapp = window.Telegram.WebApp;
+            webapp = window.Telegram.WebApp;
             console.log('WebApp initialized:', {
                 version: webapp.version,
                 platform: webapp.platform,
@@ -227,10 +356,6 @@
             
             // Expand webapp to full height
             webapp.expand();
-            
-            // Initialize variables
-            let userPoints = 0;
-            let completedTasks = [];
 
             // Получаем параметры из URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -251,7 +376,8 @@
                 completedTasksData
             });
 
-            const tasks = [
+            // Initialize tasks array
+            tasks = [
                 {
                     id: 1,
                     title: "Знакомство",
@@ -282,124 +408,6 @@
                 }
             ];
 
-            function getLevelBadge(level) {
-                return `<span class="level-badge level-${level}">${
-                    level === 'easy' ? 'Легко' :
-                    level === 'medium' ? 'Средне' : 'Сложно'
-                }</span>`;
-            }
-
-            function completeTask(taskId) {
-                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
-                if (!taskElement) return;
-
-                // Add completion animation
-                taskElement.classList.add('task-completed');
-
-                // Show points popup
-                const points = taskElement.getAttribute('data-points');
-                const popup = document.createElement('div');
-                popup.className = 'points-popup';
-                popup.textContent = `+${points} очков!`;
-                document.body.appendChild(popup);
-
-                // Remove popup after animation
-                setTimeout(() => {
-                    popup.remove();
-                }, 1000);
-
-                // Update progress
-                const taskData = tasks.find(t => t.id === taskId);
-                if (taskData) {
-                    completedTasks.push(taskId);
-                    userPoints += taskData.points;
-                    updateStats();
-                    saveProgress();
-                }
-
-                // Remove completion animation class after delay
-                setTimeout(() => {
-                    taskElement.classList.remove('task-completed');
-                }, 500);
-            }
-
-            function updateStats() {
-                document.getElementById('points').textContent = userPoints;
-                document.getElementById('completed-tasks').textContent = completedTasks.length;
-            }
-
-            function saveProgress() {
-                try {
-                    const webapp = window.Telegram.WebApp;
-                    
-                    if (!webapp) {
-                        throw new Error('Telegram WebApp не доступен');
-                    }
-
-                    // Создаем объект с данными
-                    const data = {
-                        progress: userPoints,
-                        completed: JSON.stringify(completedTasks)
-                    };
-                    
-                    console.log('Attempting to save progress:', {
-                        webappAvailable: !!webapp,
-                        webappMethods: Object.keys(webapp),
-                        data: data
-                    });
-                    
-                    // Отправляем данные через WebApp API
-                    webapp.sendData(JSON.stringify(data));
-                    console.log('Данные успешно отправлены');
-                    
-                } catch (e) {
-                    console.error('Ошибка при отправке данных:', e);
-                    try {
-                        const webapp = window.Telegram.WebApp;
-                        webapp.showPopup({
-                            title: 'Ошибка',
-                            message: 'Не удалось сохранить прогресс: ' + e.message
-                        });
-                    } catch (popupError) {
-                        alert('Ошибка: ' + e.message);
-                    }
-                }
-            }
-
-            function renderTasks() {
-                const container = document.getElementById('tasks-container');
-                container.innerHTML = '';
-
-                tasks.forEach(task => {
-                    const isCompleted = completedTasks.includes(task.id);
-                    const taskElement = document.createElement('div');
-                    taskElement.className = `task ${isCompleted ? 'completed' : ''}`;
-                    taskElement.setAttribute('data-task-id', task.id);
-                    taskElement.setAttribute('data-points', task.points);
-                    
-                    taskElement.innerHTML = `
-                        <div class="task-header">
-                            <div class="task-title">
-                                ${task.title}
-                                ${getLevelBadge(task.level)}
-                            </div>
-                            <div class="task-points">🏅 ${task.points}</div>
-                        </div>
-                        <div class="task-description">${task.description}</div>
-                        ${!isCompleted ? `
-                            <button class="complete-btn" onclick="completeTask(${task.id})">
-                                Выполнить задание
-                            </button>
-                        ` : ''}
-                    `;
-
-                    container.appendChild(taskElement);
-                });
-
-                // Обновляем статистику
-                updateStats();
-            }
-
             // Render initial tasks
             renderTasks();
 
@@ -413,3 +421,4 @@
     </script>
 </body>
 </html>
+
