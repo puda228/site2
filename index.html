@@ -258,12 +258,27 @@
             data.set('progress', userPoints);
             data.set('completed', JSON.stringify(completedTasks));
             
-            // Отправляем данные через WebApp API
-            const initData = data.toString();
-            tg.sendData(initData);
+            const dataString = data.toString();
+            console.log('Отправляем данные:', {
+                raw: dataString,
+                decoded: decodeURIComponent(dataString),
+                points: userPoints,
+                tasks: completedTasks
+            });
             
-            if (callback) {
-                callback();
+            // Отправляем данные через WebApp API
+            try {
+                tg.sendData(dataString);
+                console.log('Данные успешно отправлены через sendData');
+                if (callback) {
+                    callback();
+                }
+            } catch (e) {
+                console.error('Ошибка при отправке данных:', e);
+                tg.showPopup({
+                    title: 'Ошибка',
+                    message: 'Не удалось сохранить прогресс: ' + e.message
+                });
             }
         }
 
