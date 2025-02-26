@@ -8,6 +8,14 @@
     <style>
         :root {
             --page-animation-duration: 0.3s;
+            --border-radius: 12px;
+            --spacing: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -23,7 +31,7 @@
 
         .header {
             background: var(--tg-theme-bg-color, #fff);
-            padding: 8px 16px;
+            padding: var(--spacing);
             border-bottom: 1px solid var(--tg-theme-hint-color, #ddd);
             display: flex;
             justify-content: space-between;
@@ -31,59 +39,89 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .header-title {
-            font-size: 20px;
-            font-weight: 500;
+            font-size: 24px;
+            font-weight: 600;
             margin: 0;
-        }
-
-        .nav-button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-button-color, #2481cc);
-            font-size: 16px;
-            padding: 8px;
-            cursor: pointer;
+            color: var(--tg-theme-text-color, #000);
         }
 
         .content {
             flex: 1;
-            padding: 16px;
-            animation: fadeIn var(--page-animation-duration) ease-in-out;
+            padding: var(--spacing);
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .stats-container {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--tg-theme-button-color, #2481cc);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+
+        .task-category {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #000);
+            margin: var(--spacing) 0 8px;
+            padding: 8px var(--spacing);
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: var(--border-radius);
         }
 
         .task {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
+            background: var(--tg-theme-bg-color, #fff);
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.2s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .task:active {
-            transform: scale(0.98);
+        .task:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .task-info {
-            flex-grow: 1;
+            flex: 1;
+            margin-right: var(--spacing);
         }
 
         .task-title {
             font-size: 16px;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: var(--tg-theme-text-color, #000);
-        }
-
-        .task-description {
-            font-size: 14px;
-            color: var(--tg-theme-hint-color, #999);
-            margin-bottom: 8px;
         }
 
         .task-points {
@@ -92,112 +130,86 @@
             font-weight: 500;
         }
 
-        .complete-button {
+        .task-button {
             background: var(--tg-theme-button-color, #2481cc);
             color: var(--tg-theme-button-text-color, #fff);
             border: none;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             padding: 8px 16px;
-            cursor: pointer;
             font-size: 14px;
             font-weight: 500;
-            transition: opacity 0.2s;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
         }
 
-        .complete-button:disabled {
+        .task-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .complete-button:active:not(:disabled) {
-            opacity: 0.8;
-        }
-
-        .stats-container {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-
-        .stats-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .stats-label {
-            color: var(--tg-theme-hint-color, #999);
-            font-size: 14px;
-        }
-
-        .stats-value {
-            color: var(--tg-theme-text-color, #000);
-            font-weight: 500;
-            font-size: 16px;
-        }
-
         .leaderboard-item {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 12px;
-            padding: 16px;
+            background: var(--tg-theme-bg-color, #fff);
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
             margin-bottom: 8px;
             display: flex;
             align-items: center;
+            gap: var(--spacing);
+        }
+
+        .current-user {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border: 2px solid var(--tg-theme-button-color, #2481cc);
         }
 
         .leaderboard-rank {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 600;
             color: var(--tg-theme-button-color, #2481cc);
-            width: 40px;
-            text-align: center;
+            min-width: 30px;
         }
 
         .leaderboard-name {
-            flex-grow: 1;
-            margin: 0 16px;
+            flex: 1;
             font-size: 16px;
-        }
-
-        .leaderboard-points {
             font-weight: 500;
-            color: var(--tg-theme-button-color, #2481cc);
         }
 
         .leaderboard-stats {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
 
-        .leaderboard-streak {
-            color: var(--tg-theme-hint-color, #999);
+        .leaderboard-points, .leaderboard-streak {
             font-size: 14px;
+            font-weight: 500;
+            color: var(--tg-theme-text-color, #000);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .achievement {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 12px;
-            padding: 16px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-        }
-
-        .achievement-icon {
-            font-size: 24px;
-            margin-right: 16px;
+            position: relative;
+            overflow: hidden;
         }
 
         .achievement-info {
-            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .achievement-title {
-            font-weight: 500;
-            margin-bottom: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color, #000);
         }
 
         .achievement-description {
@@ -206,71 +218,75 @@
         }
 
         .achievement-progress {
-            background: var(--tg-theme-hint-color, #ddd);
-            height: 4px;
-            border-radius: 2px;
             margin-top: 8px;
+            height: 4px;
+            background: var(--tg-theme-hint-color, #ddd);
+            border-radius: 2px;
             overflow: hidden;
         }
 
         .achievement-progress-bar {
-            background: var(--tg-theme-button-color, #2481cc);
             height: 100%;
-            transition: width 0.3s ease-in-out;
+            background: var(--tg-theme-button-color, #2481cc);
+            transition: width 0.3s ease;
         }
 
-        .tab-bar {
+        .loading, .error, .no-data {
+            text-align: center;
+            padding: var(--spacing);
+            border-radius: var(--border-radius);
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            margin: var(--spacing) 0;
+        }
+
+        .error {
+            color: var(--tg-theme-destructive-text-color, #ff3b30);
+            background: rgba(255, 59, 48, 0.1);
+        }
+
+        .streak-container {
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            margin-bottom: var(--spacing);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .navigation {
             display: flex;
+            justify-content: center;
+            gap: var(--spacing);
+            padding: var(--spacing);
             background: var(--tg-theme-bg-color, #fff);
             border-top: 1px solid var(--tg-theme-hint-color, #ddd);
             position: sticky;
             bottom: 0;
         }
 
-        .tab-button {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            color: var(--tg-theme-hint-color, #999);
-            border: none;
+        .nav-button {
             background: none;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .tab-button.active {
-            color: var(--tg-theme-button-color, #2481cc);
-        }
-
-        .tab-icon {
-            font-size: 20px;
-        }
-
-        .streak-badge {
-            background: var(--tg-theme-button-color, #2481cc);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-
-        .task-category {
-            font-size: 14px;
+            border: none;
             color: var(--tg-theme-hint-color, #999);
-            margin-bottom: 8px;
-            font-weight: 500;
+            font-size: 14px;
             padding: 8px 16px;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            transition: all 0.2s ease;
+        }
+
+        .nav-button.active {
+            color: var(--tg-theme-button-color, #2481cc);
             background: var(--tg-theme-secondary-bg-color, #f5f5f5);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page {
+            animation: fadeIn var(--page-animation-duration) ease;
         }
     </style>
 </head>
@@ -279,48 +295,43 @@
         <h1 class="header-title" id="page-title">Задания</h1>
     </div>
 
-    <div id="tasks-page" class="page">
-        <div class="streak-container">
-            <span id="current-streak">Текущая серия: 0 дней</span>
-        </div>
-        <div id="tasks-container">
-            <!-- Tasks will be dynamically inserted here -->
-        </div>
-    </div>
-
-    <div class="content" id="leaderboard-page" style="display: none;">
-        <div class="stats-container">
-            <div class="stats-row">
-                <span class="stats-label">Ваш ранг:</span>
-                <span class="stats-value" id="user-rank">-</span>
+    <div class="content">
+        <div id="tasks-page" class="page">
+            <div class="streak-container">
+                <span id="current-streak">Текущая серия: 0 дней</span>
             </div>
-        </div>
-        <div id="leaderboard"></div>
-    </div>
 
-    <div class="content" id="achievements-page" style="display: none;">
-        <div class="stats-container">
-            <div class="stats-row">
-                <span class="stats-label">Получено достижений:</span>
-                <span class="stats-value" id="achievements-count">0/0</span>
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-points">0</div>
+                    <div class="stat-label">Очки</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="tasks-completed">0</div>
+                    <div class="stat-label">Выполнено</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="current-streak-value">0</div>
+                    <div class="stat-label">Дней подряд</div>
+                </div>
             </div>
+
+            <div id="tasks-container"></div>
         </div>
-        <div id="achievements"></div>
+
+        <div id="leaderboard-page" class="page" style="display: none;">
+            <div id="leaderboard"></div>
+        </div>
+
+        <div id="achievements-page" class="page" style="display: none;">
+            <div id="achievements"></div>
+        </div>
     </div>
 
-    <div class="tab-bar">
-        <button class="tab-button active" onclick="showPage('tasks')">
-            <span class="tab-icon">📝</span>
-            Задания
-        </button>
-        <button class="tab-button" onclick="showPage('leaderboard')">
-            <span class="tab-icon">🏆</span>
-            Рейтинг
-        </button>
-        <button class="tab-button" onclick="showPage('achievements')">
-            <span class="tab-icon">🌟</span>
-            Достижения
-        </button>
+    <div class="navigation">
+        <button class="nav-button active" onclick="showPage('tasks-page', 'Задания')">Задания</button>
+        <button class="nav-button" onclick="showPage('leaderboard-page', 'Рейтинг')">Рейтинг</button>
+        <button class="nav-button" onclick="showPage('achievements-page', 'Достижения')">Достижения</button>
     </div>
 
     <script>
@@ -347,50 +358,58 @@
             }
         };
 
-        // Глобальный рейтинг пользователей
-        let globalLeaderboard = [];
-
-        function updateLeaderboard() {
-            const leaderboardContainer = document.getElementById('leaderboard');
-            leaderboardContainer.innerHTML = '';
-
-            // Получаем данные всех пользователей из localStorage
-            const allUsers = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('taskManagerData_')) {
-                    const userData = JSON.parse(localStorage.getItem(key));
-                    const username = key.replace('taskManagerData_', '');
-                    allUsers.push({
-                        username: username,
-                        points: userData.points,
-                        streak: userData.currentStreak
-                    });
+        async function fetchLeaderboardData() {
+            try {
+                const response = await fetch(`${window.Telegram.WebApp.initDataUnsafe.start_param}/leaderboard`);
+                if (!response.ok) {
+                    throw new Error('Ошибка получения данных рейтинга');
                 }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Ошибка при получении рейтинга:', error);
+                return [];
             }
+        }
 
-            // Сортируем пользователей по очкам и серии
-            allUsers.sort((a, b) => {
-                if (b.points !== a.points) {
-                    return b.points - a.points;
+        async function updateLeaderboard() {
+            const leaderboardContainer = document.getElementById('leaderboard');
+            leaderboardContainer.innerHTML = '<div class="loading">Загрузка рейтинга...</div>';
+
+            try {
+                const leaderboardData = await fetchLeaderboardData();
+                leaderboardContainer.innerHTML = '';
+
+                if (leaderboardData.length === 0) {
+                    leaderboardContainer.innerHTML = '<div class="no-data">Пока нет данных в рейтинге</div>';
+                    return;
                 }
-                return b.streak - a.streak;
-            });
 
-            // Отображаем топ-10 пользователей
-            allUsers.slice(0, 10).forEach((user, index) => {
-                const element = document.createElement('div');
-                element.className = 'leaderboard-item';
-                element.innerHTML = `
-                    <div class="leaderboard-rank">${index + 1}</div>
-                    <div class="leaderboard-name">${user.username}</div>
-                    <div class="leaderboard-stats">
-                        <span class="leaderboard-points">${user.points} 🏅</span>
-                        <span class="leaderboard-streak">${user.streak} 🔥</span>
-                    </div>
-                `;
-                leaderboardContainer.appendChild(element);
-            });
+                leaderboardData.forEach((user, index) => {
+                    const element = document.createElement('div');
+                    element.className = 'leaderboard-item';
+                    
+                    // Выделяем текущего пользователя
+                    if (user.username === userData.username) {
+                        element.classList.add('current-user');
+                    }
+                    
+                    element.innerHTML = `
+                        <div class="leaderboard-rank">${index + 1}</div>
+                        <div class="leaderboard-name">
+                            ${user.username === userData.username ? 
+                              `${user.username} (вы)` : user.username}
+                        </div>
+                        <div class="leaderboard-stats">
+                            <span class="leaderboard-points">${user.points} 🏅</span>
+                            <span class="leaderboard-streak">${user.streak} 🔥</span>
+                        </div>
+                    `;
+                    leaderboardContainer.appendChild(element);
+                });
+            } catch (error) {
+                leaderboardContainer.innerHTML = '<div class="error">Ошибка при загрузке рейтинга</div>';
+            }
         }
 
         function updateUI() {
@@ -430,7 +449,7 @@
             // Получаем имя пользователя из Telegram WebApp
             const user = window.Telegram.WebApp.initDataUnsafe.user;
             if (user) {
-                userData.username = user.username || `User${user.id}`;
+                userData.username = user.username || `Пользователь${user.id}`;
                 const savedData = localStorage.getItem(`taskManagerData_${userData.username}`);
                 if (savedData) {
                     const data = JSON.parse(savedData);
@@ -516,18 +535,18 @@
             document.getElementById('achievements-page').style.display = 'none';
             
             // Показываем выбранную страницу
-            document.getElementById(`${pageId}-page`).style.display = 'block';
+            document.getElementById(`${pageId}`).style.display = 'block';
             
             // Обновляем заголовок
             const titles = {
-                'tasks': 'Задания',
-                'leaderboard': 'Рейтинг',
-                'achievements': 'Достижения'
+                'tasks-page': 'Задания',
+                'leaderboard-page': 'Рейтинг',
+                'achievements-page': 'Достижения'
             };
             document.getElementById('page-title').textContent = titles[pageId];
             
             // Обновляем активную вкладку
-            document.querySelectorAll('.tab-button').forEach(button => {
+            document.querySelectorAll('.nav-button').forEach(button => {
                 button.classList.remove('active');
             });
             event.currentTarget.classList.add('active');
