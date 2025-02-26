@@ -166,6 +166,17 @@
             color: var(--tg-theme-button-color, #2481cc);
         }
 
+        .leaderboard-stats {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .leaderboard-streak {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 14px;
+        }
+
         .achievement {
             background: var(--tg-theme-secondary-bg-color, #f0f0f0);
             border-radius: 12px;
@@ -319,6 +330,7 @@
             achievements: [],
             lastLoginDate: null,
             currentStreak: 0,
+            username: '',
             tasksByCategory: {
                 'Ежедневные': [
                     { id: 1, title: 'Проверить почту', points: 10, category: 'Ежедневные' },
@@ -335,12 +347,51 @@
             }
         };
 
-        const achievements = [
-            { id: 1, title: 'Новичок', description: 'Заработайте первые 50 очков', requiredPoints: 50 },
-            { id: 2, title: 'Мастер', description: 'Заработайте 200 очков', requiredPoints: 200 },
-            { id: 3, title: 'Серийный исполнитель', description: 'Достигните серии в 3 дня', requiredStreak: 3 },
-            { id: 4, title: 'Недельный герой', description: 'Достигните серии в 7 дней', requiredStreak: 7 }
-        ];
+        // Глобальный рейтинг пользователей
+        let globalLeaderboard = [];
+
+        function updateLeaderboard() {
+            const leaderboardContainer = document.getElementById('leaderboard');
+            leaderboardContainer.innerHTML = '';
+
+            // Получаем данные всех пользователей из localStorage
+            const allUsers = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('taskManagerData_')) {
+                    const userData = JSON.parse(localStorage.getItem(key));
+                    const username = key.replace('taskManagerData_', '');
+                    allUsers.push({
+                        username: username,
+                        points: userData.points,
+                        streak: userData.currentStreak
+                    });
+                }
+            }
+
+            // Сортируем пользователей по очкам и серии
+            allUsers.sort((a, b) => {
+                if (b.points !== a.points) {
+                    return b.points - a.points;
+                }
+                return b.streak - a.streak;
+            });
+
+            // Отображаем топ-10 пользователей
+            allUsers.slice(0, 10).forEach((user, index) => {
+                const element = document.createElement('div');
+                element.className = 'leaderboard-item';
+                element.innerHTML = `
+                    <div class="leaderboard-rank">${index + 1}</div>
+                    <div class="leaderboard-name">${user.username}</div>
+                    <div class="leaderboard-stats">
+                        <span class="leaderboard-points">${user.points} 🏅</span>
+                        <span class="leaderboard-streak">${user.streak} 🔥</span>
+                    </div>
+                `;
+                leaderboardContainer.appendChild(element);
+            });
+        }
 
         function updateUI() {
             const tasksContainer = document.getElementById('tasks-container');
@@ -376,12 +427,17 @@
         }
 
         function loadProgress() {
-            const saved = localStorage.getItem('taskManagerData');
-            if (saved) {
-                const data = JSON.parse(saved);
-                userData = { ...userData, ...data };
+            // Получаем имя пользователя из Telegram WebApp
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            if (user) {
+                userData.username = user.username || `User${user.id}`;
+                const savedData = localStorage.getItem(`taskManagerData_${userData.username}`);
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    userData = { ...userData, ...data };
+                }
                 
-                // Check streak
+                // Проверяем серию
                 const today = new Date().toDateString();
                 if (userData.lastLoginDate) {
                     const lastLogin = new Date(userData.lastLoginDate);
@@ -396,21 +452,33 @@
                 userData.lastLoginDate = today;
             }
             updateUI();
+            updateLeaderboard();
         }
 
         function saveProgress() {
-            localStorage.setItem('taskManagerData', JSON.stringify(userData));
-            // Send data to Telegram WebApp
-            if (window.Telegram.WebApp.initDataUnsafe.user) {
-                const dataToSend = {
-                    points: userData.points,
-                    streak: userData.currentStreak
-                };
-                window.Telegram.WebApp.sendData(JSON.stringify(dataToSend));
+            if (userData.username) {
+                localStorage.setItem(`taskManagerData_${userData.username}`, JSON.stringify(userData));
+                updateLeaderboard();
+                
+                // Отправляем данные в Telegram WebApp
+                if (window.Telegram.WebApp.initDataUnsafe.user) {
+                    const dataToSend = {
+                        points: userData.points,
+                        streak: userData.currentStreak
+                    };
+                    window.Telegram.WebApp.sendData(JSON.stringify(dataToSend));
+                }
             }
         }
 
         function checkAchievements() {
+            const achievements = [
+                { id: 1, title: 'Новичок', description: 'Заработайте первые 50 очков', requiredPoints: 50 },
+                { id: 2, title: 'Мастер', description: 'Заработайте 200 очков', requiredPoints: 200 },
+                { id: 3, title: 'Серийный исполнитель', description: 'Достигните серии в 3 дня', requiredStreak: 3 },
+                { id: 4, title: 'Недельный герой', description: 'Достигните серии в 7 дней', requiredStreak: 7 }
+            ];
+
             achievements.forEach(achievement => {
                 if (!userData.achievements.includes(achievement.id)) {
                     if (
