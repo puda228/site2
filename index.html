@@ -261,16 +261,6 @@
                 completedTasks.push(taskId);
                 userPoints += task.points;
                 
-                // Показываем уведомление
-                tg.showPopup({
-                    title: 'Задание выполнено!',
-                    message: `Вы получили ${task.points} очков!`,
-                    buttons: [{
-                        id: "ok",
-                        type: "ok"
-                    }]
-                });
-
                 // Отправляем данные в бот
                 const data = {
                     action: 'update_progress',
@@ -278,7 +268,19 @@
                     completed_tasks: JSON.stringify(completedTasks)
                 };
                 
+                console.log('Sending data to bot:', data);
                 tg.sendData(JSON.stringify(data));
+
+                // Показываем уведомление
+                tg.showPopup({
+                    title: 'Задание выполнено!',
+                    message: `Вы получили ${task.points} очков!\nОчки: ${userPoints}\nВыполнено заданий: ${completedTasks.length}`,
+                    buttons: [{
+                        id: "ok",
+                        type: "ok"
+                    }]
+                });
+
                 renderTasks();
             }
         }
@@ -295,6 +297,7 @@
                 points: userPoints,
                 completed_tasks: JSON.stringify(completedTasks)
             };
+            console.log('Sending final data to bot:', data);
             tg.sendData(JSON.stringify(data));
             tg.close();
         });
