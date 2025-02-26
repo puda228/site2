@@ -198,8 +198,17 @@
     <div class="tasks" id="tasks-container"></div>
 
     <script>
-        // Initialize Telegram WebApp
+        // Ensure WebApp is available
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            alert('Ошибка: Telegram WebApp не доступен');
+            throw new Error('Telegram WebApp не доступен');
+        }
+
+        // Get WebApp instance
         const tg = window.Telegram.WebApp;
+
+        // Wait for WebApp to be ready
+        tg.ready();
         
         // Expand webapp to full height
         tg.expand();
@@ -307,9 +316,12 @@
 
         function saveProgress() {
             try {
-                if (!tg || !tg.WebApp) {
-                    throw new Error('Telegram WebApp не инициализирован');
+                if (!window.Telegram || !window.Telegram.WebApp) {
+                    throw new Error('Telegram WebApp не доступен');
                 }
+
+                // Get fresh instance of WebApp
+                const tg = window.Telegram.WebApp;
 
                 // Создаем объект с данными
                 const data = {
@@ -321,14 +333,16 @@
                 const queryString = new URLSearchParams(data).toString();
                 
                 console.log('Отправляем данные:', {
+                    webAppAvailable: !!tg,
+                    sendDataAvailable: typeof tg.sendData === 'function',
                     data: data,
                     queryString: queryString,
                     decoded: decodeURIComponent(queryString)
                 });
                 
                 // Отправляем данные через WebApp API
-                if (typeof tg.WebApp.sendData === 'function') {
-                    tg.WebApp.sendData(queryString);
+                if (typeof tg.sendData === 'function') {
+                    tg.sendData(queryString);
                     console.log('Данные успешно отправлены');
                 } else {
                     throw new Error('Метод sendData недоступен');
@@ -336,12 +350,17 @@
                 
             } catch (e) {
                 console.error('Ошибка при отправке данных:', e);
-                if (tg && typeof tg.showPopup === 'function') {
-                    tg.showPopup({
-                        title: 'Ошибка',
-                        message: 'Не удалось сохранить прогресс: ' + e.message
-                    });
-                } else {
+                try {
+                    const tg = window.Telegram.WebApp;
+                    if (tg && typeof tg.showPopup === 'function') {
+                        tg.showPopup({
+                            title: 'Ошибка',
+                            message: 'Не удалось сохранить прогресс: ' + e.message
+                        });
+                    } else {
+                        alert('Ошибка: ' + e.message);
+                    }
+                } catch (popupError) {
                     alert('Ошибка: ' + e.message);
                 }
             }
