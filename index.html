@@ -253,21 +253,27 @@
                     throw new Error('Telegram WebApp не доступен');
                 }
 
-                // Создаем объект с данными
-                const data = {
-                    progress: window.userPoints,
-                    completed: JSON.stringify(window.completedTasks)
-                };
+                // Создаем данные в формате URL параметров
+                const params = new URLSearchParams();
+                params.append('progress', window.userPoints);
+                params.append('completed', JSON.stringify(window.completedTasks));
                 
-                console.log('Attempting to save progress:', {
-                    webappAvailable: !!window.webapp,
-                    webappMethods: Object.keys(window.webapp),
-                    data: data
+                const queryString = params.toString();
+                
+                console.log('Отправляем данные:', {
+                    progress: window.userPoints,
+                    completed: window.completedTasks,
+                    queryString: queryString
                 });
                 
-                // Отправляем данные через WebApp API
-                window.webapp.sendData(JSON.stringify(data));
-                console.log('Данные успешно отправлены');
+                // Отправляем данные
+                window.webapp.sendData(queryString);
+                
+                // Показываем уведомление об успехе
+                window.webapp.showPopup({
+                    title: 'Успех',
+                    message: `Задание выполнено! +${window.userPoints} очков`
+                });
                 
             } catch (e) {
                 console.error('Ошибка при отправке данных:', e);
