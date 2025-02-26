@@ -236,17 +236,34 @@
                 completedTasks.push(taskId);
                 userPoints += task.points;
 
-                // Показываем уведомление
-                tg.showPopup({
-                    title: 'Задание выполнено!',
-                    message: `Вы получили ${task.points} очков!\nОчки: ${userPoints}\nВыполнено заданий: ${completedTasks.length}`,
-                    buttons: [{
-                        id: "ok",
-                        type: "ok"
-                    }]
-                });
+                // Сохраняем прогресс сразу после выполнения задания
+                saveProgress(() => {
+                    // Показываем уведомление только после успешного сохранения
+                    tg.showPopup({
+                        title: 'Задание выполнено!',
+                        message: `Вы получили ${task.points} очков!\nОчки: ${userPoints}\nВыполнено заданий: ${completedTasks.length}`,
+                        buttons: [{
+                            id: "ok",
+                            type: "ok"
+                        }]
+                    });
 
-                renderTasks();
+                    renderTasks();
+                });
+            }
+        }
+
+        function saveProgress(callback) {
+            const data = new URLSearchParams();
+            data.set('progress', userPoints);
+            data.set('completed', JSON.stringify(completedTasks));
+            
+            // Отправляем данные через WebApp API
+            const initData = data.toString();
+            tg.sendData(initData);
+            
+            if (callback) {
+                callback();
             }
         }
 
@@ -287,22 +304,8 @@
         renderTasks();
 
         // Настраиваем главную кнопку
-        tg.MainButton.text = "Сохранить и закрыть";
+        tg.MainButton.text = "Закрыть";
         tg.MainButton.onClick(() => {
-            // Создаем URL с обновленными параметрами
-            const updatedParams = new URLSearchParams(window.location.search);
-            updatedParams.set('progress', userPoints);
-            updatedParams.set('completed', JSON.stringify(completedTasks));
-            
-            console.log('Saving data:', {
-                progress: userPoints,
-                completed: completedTasks
-            });
-            
-            // Сохраняем URL в initData для передачи боту
-            const data = updatedParams.toString();
-            console.log('Sending data to bot:', data);
-            tg.initData = data;
             tg.close();
         });
         tg.MainButton.show();
