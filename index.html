@@ -198,17 +198,22 @@
     <div class="tasks" id="tasks-container"></div>
 
     <script>
+        // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
+        
+        // Expand webapp to full height
         tg.expand();
-        tg.ready();
+        
+        // Initialize variables
+        let userPoints = 0;
+        let completedTasks = [];
 
         // Получаем параметры из URL
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('userId');
-        let userPoints = parseInt(urlParams.get('progress')) || 0;
+        userPoints = parseInt(urlParams.get('progress')) || 0;
         let completedTasksData = urlParams.get('completed') || '[]';
-        let completedTasks = [];
-
+        
         console.log('URL Parameters:', {
             userId,
             userPoints,
@@ -302,6 +307,10 @@
 
         function saveProgress() {
             try {
+                if (!tg || !tg.WebApp) {
+                    throw new Error('Telegram WebApp не инициализирован');
+                }
+
                 // Создаем объект с данными
                 const data = {
                     progress: userPoints,
@@ -318,15 +327,23 @@
                 });
                 
                 // Отправляем данные через WebApp API
-                tg.WebApp.sendData(queryString);
-                console.log('Данные успешно отправлены');
+                if (typeof tg.WebApp.sendData === 'function') {
+                    tg.WebApp.sendData(queryString);
+                    console.log('Данные успешно отправлены');
+                } else {
+                    throw new Error('Метод sendData недоступен');
+                }
                 
             } catch (e) {
                 console.error('Ошибка при отправке данных:', e);
-                tg.showPopup({
-                    title: 'Ошибка',
-                    message: 'Не удалось сохранить прогресс: ' + e.message
-                });
+                if (tg && typeof tg.showPopup === 'function') {
+                    tg.showPopup({
+                        title: 'Ошибка',
+                        message: 'Не удалось сохранить прогресс: ' + e.message
+                    });
+                } else {
+                    alert('Ошибка: ' + e.message);
+                }
             }
         }
 
