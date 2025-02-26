@@ -178,9 +178,17 @@
         let completedTasksData = urlParams.get('completed') || '[]';
         let completedTasks = [];
 
+        console.log('URL Parameters:', {
+            userId,
+            userPoints,
+            completedTasksData
+        });
+
         try {
             completedTasks = JSON.parse(completedTasksData);
+            console.log('Parsed completedTasks:', completedTasks);
         } catch (e) {
+            console.error('Error parsing completedTasks:', e);
             completedTasks = [];
         }
 
@@ -286,8 +294,15 @@
             updatedParams.set('progress', userPoints);
             updatedParams.set('completed', JSON.stringify(completedTasks));
             
+            console.log('Saving data:', {
+                progress: userPoints,
+                completed: completedTasks
+            });
+            
             // Сохраняем URL в initData для передачи боту
-            tg.initData = updatedParams.toString();
+            const data = updatedParams.toString();
+            console.log('Sending data to bot:', data);
+            tg.initData = data;
             tg.close();
         });
         tg.MainButton.show();
