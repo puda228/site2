@@ -222,6 +222,26 @@
             }</span>`;
         }
 
+        function completeTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task && !completedTasks.includes(taskId)) {
+                completedTasks.push(taskId);
+                userPoints += task.points;
+
+                // Показываем уведомление
+                tg.showPopup({
+                    title: 'Задание выполнено!',
+                    message: `Вы получили ${task.points} очков!\nОчки: ${userPoints}\nВыполнено заданий: ${completedTasks.length}`,
+                    buttons: [{
+                        id: "ok",
+                        type: "ok"
+                    }]
+                });
+
+                renderTasks();
+            }
+        }
+
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             container.innerHTML = '';
@@ -255,54 +275,22 @@
             document.getElementById('completed-tasks').textContent = completedTasks.length;
         }
 
-        function completeTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task && !completedTasks.includes(taskId)) {
-                completedTasks.push(taskId);
-                userPoints += task.points;
-                
-                // Отправляем данные в бот
-                const data = {
-                    action: 'update_progress',
-                    points: userPoints,
-                    completed_tasks: JSON.stringify(completedTasks)
-                };
-                
-                console.log('Sending data to bot:', data);
-                tg.sendData(JSON.stringify(data));
-
-                // Показываем уведомление
-                tg.showPopup({
-                    title: 'Задание выполнено!',
-                    message: `Вы получили ${task.points} очков!\nОчки: ${userPoints}\nВыполнено заданий: ${completedTasks.length}`,
-                    buttons: [{
-                        id: "ok",
-                        type: "ok"
-                    }]
-                });
-
-                renderTasks();
-            }
-        }
-
         // Первоначальный рендер заданий
         renderTasks();
 
         // Настраиваем главную кнопку
-        tg.MainButton.text = "Закрыть";
+        tg.MainButton.text = "Сохранить и закрыть";
         tg.MainButton.onClick(() => {
-            // Отправляем последние данные перед закрытием
-            const data = {
-                action: 'update_progress',
-                points: userPoints,
-                completed_tasks: JSON.stringify(completedTasks)
-            };
-            console.log('Sending final data to bot:', data);
-            tg.sendData(JSON.stringify(data));
+            // Создаем URL с обновленными параметрами
+            const updatedParams = new URLSearchParams(window.location.search);
+            updatedParams.set('progress', userPoints);
+            updatedParams.set('completed', JSON.stringify(completedTasks));
+            
+            // Сохраняем URL в initData для передачи боту
+            tg.initData = updatedParams.toString();
             tg.close();
         });
         tg.MainButton.show();
     </script>
 </body>
 </html>
-
